@@ -1,0 +1,8 @@
+{
+  "name": "ViralBD - বাংলাদেশের সেরা ভাইরাল ভিডিও ব্লগ",
+  "description": "বাংলাদেশে সেরা ভাইরাল ভিডিও, প্রিমিয়াম কন্টেন্ট এবং লেটেস্ট ট্রেন্ডিং ভিডিওর জন্য ভাইরাল বিডি। প্রতিদিন নতুন ভিডিও আপডেট পান।",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

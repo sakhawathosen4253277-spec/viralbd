@@ -1,0 +1,128 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'sakhawathosen425327@gmail.com';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128;
+    }
+
+    function isValidVideo(data) {
+      // Basic schema validation
+      return (data.title == null || (data.title is string && data.title.size() <= 500)) &&
+             (data.thumbnail == null || (data.thumbnail is string && data.thumbnail.size() <= 1048576)) &&
+             (data.category == null || data.category is string) &&
+             (data.status == null || data.status in ['approved', 'pending']) &&
+             (data.views == null || data.views is number || data.views is int || data.views is string) &&
+             (data.embedCode == null || data.embedCode is string) &&
+             (data.videoUrl == null || data.videoUrl is string) &&
+             (data.isVip == null || data.isVip is bool) &&
+             (data.createdAt == null || data.createdAt == request.time || data.createdAt is timestamp);
+    }
+
+    function isValidPlaylist(data) {
+      return (data.title is string && data.title.size() <= 500) &&
+             (data.thumbnail is string && data.thumbnail.size() <= 1048576) &&
+             (data.videoIds is list && data.videoIds.size() <= 200) &&
+             (data.createdAt == null || data.createdAt == request.time || data.createdAt is timestamp);
+    }
+
+    function isValidComment(data) {
+      return (data.videoId is string && data.videoId.size() <= 128) &&
+             (data.userName is string && data.userName.size() <= 100) &&
+             (data.text is string && data.text.size() <= 5000) &&
+             (data.timestamp is number) &&
+             (data.likes is number);
+    }
+
+    function isValidRating(data) {
+      return (data.userId is string) &&
+             (data.rating is number && data.rating >= 1 && data.rating <= 5);
+    }
+
+    function isValidUserProfile(data) {
+       return (data.userId == request.auth.uid) &&
+              (data.favorites is list && data.favorites.size() <= 1000) &&
+              (data.watchHistory is list && data.watchHistory.size() <= 1000) &&
+              (data.watchProgress is map) &&
+              (data.updatedAt == request.time || data.updatedAt is timestamp);
+    }
+
+    // Videos Collection
+    match /videos/{videoId} {
+      allow read: if isAdmin() || (resource != null && resource.data.status == 'approved');
+      
+      allow create: if (isAdmin() || (isValidVideo(request.resource.data) && request.resource.data.status == 'pending')) && 
+                      (request.resource.data.views == 0 || request.resource.data.views == '0' || isAdmin()) &&
+                      isValidId(videoId);
+
+      allow update: if isAdmin() ||
+                      (resource.data.status == 'approved' && 
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) &&
+                       (
+                         // Handles number to number
+                         (resource.data.views is number && request.resource.data.views == resource.data.views + 5) ||
+                         // Handles string to number (transition)
+                         (resource.data.views is string && request.resource.data.views is number) ||
+                         // Default safety
+                         true
+                       ));
+
+      allow delete: if isAdmin();
+    }
+
+    // Site Settings
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Playlists Collection
+    match /playlists/{playlistId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidPlaylist(request.resource.data) && isValidId(playlistId);
+      allow update: if isAdmin() && isValidPlaylist(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Comments subcollection
+    match /comments/{videoId} {
+      allow read: if true;
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isSignedIn() && isValidComment(request.resource.data);
+        allow update: if isSignedIn() && (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+        );
+        allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      }
+    }
+
+    // Ratings subcollection
+    match /ratings/{videoId} {
+      allow read: if true;
+      match /ratings/{ratingId} {
+        allow read: if true;
+        allow write: if isSignedIn() && request.auth.uid == ratingId && isValidRating(request.resource.data);
+      }
+    }
+
+    // User Profiles
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow write: if isSignedIn() && request.auth.uid == userId && isValidUserProfile(request.resource.data);
+    }
+  }
+}

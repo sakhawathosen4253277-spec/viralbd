@@ -1,0 +1,138 @@
+{
+  "entities": {
+    "Video": {
+      "title": "Video",
+      "description": "A video post in the platform",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "thumbnail": { "type": "string" },
+        "category": { "type": "string" },
+        "views": { "type": "number" },
+        "time": { "type": "string" },
+        "isVip": { "type": "boolean" },
+        "embedCode": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["approved", "pending"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "thumbnail", "category", "status"]
+    },
+    "SiteSettings": {
+      "title": "Site Settings",
+      "description": "Global configuration for the website",
+      "type": "object",
+      "properties": {
+        "telegramLink": { "type": "string" },
+        "whatsappLink": { "type": "string" },
+        "marqueeText": { "type": "string" },
+        "logoTextPrimary": { "type": "string" },
+        "logoTextSecondary": { "type": "string" },
+        "heroBadge": { "type": "string" },
+        "heroTitlePart1": { "type": "string" },
+        "heroTitleHighlight": { "type": "string" },
+        "heroTitlePart2": { "type": "string" },
+        "heroSubtext": { "type": "string" },
+        "heroImageUrl": { "type": "string" },
+        "footerCopyright": { "type": "string" },
+        "agePopupTitle": { "type": "string" },
+        "agePopupDesc": { "type": "string" },
+        "aboutText": { "type": "string" },
+        "dmcaPolicy": { "type": "string" },
+        "privacyPolicy": { "type": "string" },
+        "trendingTitle": { "type": "string" },
+        "trendingSubtitle": { "type": "string" },
+        "adminPassword": { "type": "string" },
+        "adHeader": { "type": "string" },
+        "adHomepageTop": { "type": "string" },
+        "adHomepageMiddle": { "type": "string" },
+        "adHomepageBottom": { "type": "string" },
+        "adPostTitle": { "type": "string" },
+        "adInPost": { "type": "string" },
+        "adPostBottom": { "type": "string" },
+        "adSidebarSticky": { "type": "string" },
+        "adFooter": { "type": "string" },
+        "adMobileSticky": { "type": "string" },
+        "adPopup": { "type": "string" }
+      }
+    },
+    "Playlist": {
+      "title": "Playlist",
+      "description": "A collection of videos curated by admin",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "thumbnail": { "type": "string" },
+        "videoIds": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "thumbnail", "videoIds"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "User comment on a video",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "videoId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "likes": { "type": "number" }
+      },
+      "required": ["videoId", "userName", "text"]
+    },
+    "Rating": {
+      "title": "Rating",
+      "description": "Video rating",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "rating": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user-specific data like favorites and watch history",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "favorites": { "type": "array", "items": { "type": "string" } },
+        "watchHistory": { "type": "array", "items": { "type": "object" } },
+        "watchProgress": { "type": "object" },
+        "preferences": { "type": "object" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/videos": {
+      "schema": "Video",
+      "description": "Collection of all video posts (approved and pending)"
+    },
+    "/settings": {
+      "schema": "SiteSettings",
+      "description": "Global site settings document"
+    },
+    "/playlists": {
+      "schema": "Playlist",
+      "description": "Curated video playlists"
+    },
+    "/comments/{videoId}/comments": {
+      "schema": "Comment",
+      "description": "Subcollection of comments for a specific video"
+    },
+    "/ratings/{videoId}/ratings": {
+      "schema": "Rating",
+      "description": "Individual ratings for a specific video"
+    },
+    "/users": {
+      "schema": "UserProfile",
+      "description": "User profiles for persistence"
+    }
+  }
+}
